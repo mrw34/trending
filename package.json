@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "dotenv": "^6.0.0",
+    "got": "^8.3.1",
+    "mongodb": "^3.0.10",
+    "nodemailer": "^4.6.5",
+    "nodemailer-markdown": "^1.0.2"
+  },
+  "private": true,
+  "scripts": {
+    "start": "node -r dotenv/config server.js"
+  }
+}
