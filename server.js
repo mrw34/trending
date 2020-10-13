@@ -1,14 +1,14 @@
 const got = require('got');
-const {MongoClient} = require('mongodb');
+const { MongoClient } = require('mongodb');
 const nodemailer = require('nodemailer');
-const markdown = require('nodemailer-markdown').markdown;
+const marked = require("marked");
 
 async function retrieve() {
-  const response = await got.post('https://api.github.com/graphql', {
+  const json = await got.post('https://api.github.com/graphql', {
     headers: {
       Authorization: `bearer ${process.env.GITHUB_ACCESS_TOKEN}`
     },
-    body: {
+    json: {
       query: `
         {
           search(type: REPOSITORY, query: "org:${process.env.ORGANISATION}", first: 100) {
@@ -39,28 +39,27 @@ async function retrieve() {
         }
       `
     },
-    json: true
-  });
-  return response.body.data.search.edges.map(({node}) => {
+  }).json();
+  return json.data.search.edges.map(({ node }) => {
     const {
       name,
       description,
       url,
       forkCount: forks,
-      stargazers: {totalCount: stars}
+      stargazers: { totalCount: stars }
     } = node;
     const commits = (node.defaultBranchRef && node.defaultBranchRef.target.history.totalCount) || 0;
-    return {name, description, url, forks, stars, commits};
+    return { name, description, url, forks, stars, commits };
   });
 }
 
 async function store(rs) {
-  const client = await new MongoClient(process.env.MONGO_URL).connect();
+  const client = await new MongoClient(process.env.MONGO_URL, { useUnifiedTopology: true }).connect();
   for (const r of rs) {
-    const {value} = await client
-      .db()
+    const { value } = await client
+      .db('trending')
       .collection('repositories')
-      .findOneAndUpdate({name: r.name}, r, {upsert: true});
+      .findOneAndReplace({ name: r.name }, r, { upsert: true });
     Object.assign(r, {
       deltaForks: r.forks - ((value && value.forks) || 0),
       deltaStars: r.stars - ((value && value.stars) || 0),
@@ -78,9 +77,9 @@ async function store(rs) {
 (async () => {
   const rs = await retrieve();
   const maxDeltas = await store(rs);
-  let message = '';
+  let text = '';
   if (maxDeltas.forks) {
-    message +=
+    text +=
       `Most forked (+${maxDeltas.forks}):\n\n` +
       rs
         .filter(r => r.deltaForks === maxDeltas.forks)
@@ -89,7 +88,7 @@ async function store(rs) {
       '\n\n';
   }
   if (maxDeltas.stars) {
-    message +=
+    text +=
       `Most starred (+${maxDeltas.stars}):\n\n` +
       rs
         .filter(r => r.deltaStars === maxDeltas.stars)
@@ -98,7 +97,7 @@ async function store(rs) {
       '\n\n';
   }
   if (maxDeltas.commits) {
-    message +=
+    text +=
       `Most commits (+${maxDeltas.commits}):\n\n` +
       rs
         .filter(r => r.deltaCommits === maxDeltas.commits)
@@ -106,14 +105,13 @@ async function store(rs) {
         .join('\n') +
       '\n\n';
   }
-  if (message) {
+  if (text) {
     const transporter = nodemailer.createTransport(process.env.SMTP_URL);
-    transporter.use('compile', markdown());
     transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: process.env.EMAIL_TO,
       subject: `Trending repositories for ${process.env.ORGANISATION}`,
-      markdown: message
+      html: marked(text)
     });
   }
 })();
