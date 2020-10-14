@@ -1,15 +1,20 @@
-name: ci
-on: push
+on:
+  schedule:
+    - cron: "0 8 * * *"
 jobs:
-  publish:
+  execute:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: docker/build-push-action@v1
+      - uses: actions/setup-node@v1
         with:
-          registry: docker.pkg.github.com
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          repository: mrw34/trending/trending
-          tag_with_ref: true
-          tag_with_sha: true
+          node-version: "14"
+      - run: npm ci
+      - run: npm start
+        env:
+          GITHUB_ACCESS_TOKEN: ${{secrets.ACCESS_TOKEN}}
+          ORGANISATION: ${{secrets.ORGANISATION}}
+          MONGO_URL: ${{secrets.MONGO_URL}}
+          SMTP_URL: ${{secrets.SMTP_URL}}
+          EMAIL_FROM: ${{secrets.EMAIL_FROM}}
+          EMAIL_TO: ${{secrets.EMAIL_TO}}
