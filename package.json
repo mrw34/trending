@@ -1,9 +1,8 @@
 {
-    "private": true,
-    "dependencies": {
-        "got": "11.7.0",
-        "marked": "1.2.0",
-        "mongodb": "3.6.2",
-        "nodemailer": "6.4.13"
-    }
+  "dependencies": {
+    "got": "^11.8.1",
+    "marked": "^2.0.0",
+    "mongodb": "^3.6.4",
+    "nodemailer": "^6.4.17"
+  }
 }
