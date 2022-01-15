@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "got": "^11.8.1",
-    "marked": "^2.0.0",
+    "marked": "^4.0.10",
     "mongodb": "^3.6.4",
     "nodemailer": "^6.4.17"
   }
