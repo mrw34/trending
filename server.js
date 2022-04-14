@@ -1,7 +1,7 @@
-const got = require('got');
-const { MongoClient } = require('mongodb');
-const nodemailer = require('nodemailer');
-const marked = require("marked");
+import got from 'got';
+import { MongoClient } from 'mongodb';
+import nodemailer from 'nodemailer';
+import { marked } from 'marked';
 
 async function retrieve() {
   const json = await got.post('https://api.github.com/graphql', {
@@ -54,7 +54,7 @@ async function retrieve() {
 }
 
 async function store(rs) {
-  const client = await new MongoClient(process.env.MONGO_URL, { useUnifiedTopology: true }).connect();
+  const client = await new MongoClient(process.env.MONGO_URL).connect();
   for (const r of rs) {
     const { value } = await client
       .db('trending')
