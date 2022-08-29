@@ -1,33 +1,35 @@
-import got from 'got';
 import { MongoClient } from 'mongodb';
 import nodemailer from 'nodemailer';
 import { marked } from 'marked';
 
 async function retrieve() {
-  const json = await got.post('https://api.github.com/graphql', {
+  const response = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
     headers: {
       Authorization: `bearer ${process.env.GITHUB_ACCESS_TOKEN}`
     },
-    json: {
-      query: `
-        {
-          search(type: REPOSITORY, query: "org:${process.env.ORGANISATION}", first: 100) {
-            repositoryCount
-            edges {
-              node {
-                ... on Repository {
-                  name
-                  description
-                  url
-                  forkCount
-                  stargazers {
-                    totalCount
-                  }
-                  defaultBranchRef {
-                    target {
-                      ... on Commit {
-                        history {
-                          totalCount
+    body: JSON.stringify(
+      {
+        query: `
+          {
+            search(type: REPOSITORY, query: "org:${process.env.ORGANISATION}", first: 100) {
+              repositoryCount
+              edges {
+                node {
+                  ... on Repository {
+                    name
+                    description
+                    url
+                    forkCount
+                    stargazers {
+                      totalCount
+                    }
+                    defaultBranchRef {
+                      target {
+                        ... on Commit {
+                          history {
+                            totalCount
+                          }
                         }
                       }
                     }
@@ -36,10 +38,11 @@ async function retrieve() {
               }
             }
           }
-        }
-      `
-    },
-  }).json();
+        `
+      }
+    )
+  });
+  const json = await response.json();
   return json.data.search.edges.map(({ node }) => {
     const {
       name,
