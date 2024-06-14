@@ -62,7 +62,7 @@ async function store(rs) {
     const { value } = await client
       .db('trending')
       .collection('repositories')
-      .findOneAndReplace({ name: r.name }, r, { upsert: true });
+      .replaceOne({ name: r.name }, r, { upsert: true });
     Object.assign(r, {
       deltaForks: r.forks - ((value && value.forks) || 0),
       deltaStars: r.stars - ((value && value.stars) || 0),
