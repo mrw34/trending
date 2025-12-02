@@ -2,7 +2,7 @@
   "dependencies": {
     "marked": "13.0.3",
     "mongodb": "6.8.0",
-    "nodemailer": "7.0.7"
+    "nodemailer": "7.0.11"
   },
   "type": "module"
 }
